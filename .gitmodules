@@ -1,0 +1,9 @@
+[submodule "src/bringup"]
+	path = src/bringup
+	url = git@github.com:LuisLechugaRuiz/bringup.git
+[submodule "src/navigation2"]
+	path = src/navigation2
+	url = git@github.com:LuisLechugaRuiz/navigation2.git
+[submodule "src/turtlebot3_simulations"]
+	path = src/turtlebot3_simulations
+	url = git@github.com:LuisLechugaRuiz/turtlebot3_simulations.git
