@@ -2,17 +2,22 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-namespace robotics {
 namespace brain {
 
 TaskMonitor::TaskMonitor() : Node("task_monitor") {
   RCLCPP_INFO(this->get_logger(), "Constructor");
-  initial_pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose", 1);
+  initial_pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose",
+                                                                                                  rclcpp::SystemDefaultsQoS());
   this->declare_parameter<double>("initial_x", 0.0);
   this->declare_parameter<double>("initial_y", 0.0);
   this->declare_parameter<double>("initial_z", 0.0);
-  Start();
 }
+
+
+TaskMonitor::~TaskMonitor() {
+  RCLCPP_INFO(this->get_logger(), "Destructor");
+}
+
 
 geometry_msgs::msg::PoseWithCovarianceStamped TaskMonitor::GetInitialPose() {
   // Get parameters
@@ -22,7 +27,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped TaskMonitor::GetInitialPose() {
   this->get_parameter_or("initial_yaw", initial_yaw, 0.0);
   // Get the location
   geometry_msgs::msg::Point initial_location;
-  initial_location.set__x(initial_x).set__y(initial_x).set__z(initial_x);
+  initial_location.set__x(initial_x).set__y(initial_y).set__z(0.0);
   // Get the orientation
   geometry_msgs::msg::Quaternion initial_orientation;
   tf2::Quaternion initial_orientation_tf;
@@ -46,5 +51,4 @@ void TaskMonitor::Start() {
   RCLCPP_INFO(this->get_logger(), "Initial pose sent to AMCL");
 }
 
-} // namespace robotics
 } // namespace brain
