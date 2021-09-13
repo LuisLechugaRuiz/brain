@@ -1,0 +1,7 @@
+#goal definition
+geometry_msgs/PoseWithCovarianceStamped pose
+string behavior_tree
+---
+#result definition
+std_msgs/Empty result
+---
