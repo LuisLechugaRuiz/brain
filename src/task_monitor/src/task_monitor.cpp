@@ -69,9 +69,9 @@ void TaskMonitor::AmclPoseCallback(const geometry_msgs::msg::PoseWithCovarianceS
 
 bool TaskMonitor::IsRobotAtPose(geometry_msgs::msg::PoseWithCovarianceStamped desired_pose) {
   // Get the relative tf from the actual robot pose to the desired pose
-  tf2::Stamped<tf2::Transform> robot_pose_tf, desired_pose_tf;
-  tf2::fromMsg(robot_pose_, robot_pose_tf);
-  tf2::fromMsg(desired_pose, desired_pose_tf);
+  tf2::Transform robot_pose_tf, desired_pose_tf;
+  tf2::fromMsg(robot_pose_.pose.pose, robot_pose_tf);
+  tf2::fromMsg(desired_pose.pose.pose, desired_pose_tf);
   tf2::Transform relative_tf = robot_pose_tf.inverseTimes(desired_pose_tf);
 
   // Check that location coordinates are lower than the distance tolerance
