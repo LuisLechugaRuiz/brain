@@ -1,6 +1,6 @@
 #goal definition
 geometry_msgs/PoseWithCovarianceStamped pose
-string behavior_tree
+float32 timeout_s
 ---
 #result definition
 std_msgs/Empty result

@@ -1,10 +1,11 @@
-
 #ifndef BEHAVIOR_TREE__PLUGINS__ACTION__INITIALIZE_NAVIGATION_ACTION_HPP_
 #define BEHAVIOR_TREE__PLUGINS__ACTION__INITIALIZE_NAVIGATION_ACTION_HPP_
 
 #include <string>
 
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav2_behavior_tree/bt_action_node.hpp"
+#include "task_msgs/action/initialize_navigation.hpp"
 
 namespace behavior_tree {
 namespace action {
@@ -12,7 +13,7 @@ namespace action {
 /**
  * @brief A nav2_behavior_tree::BtActionNode class that wraps behavior_tree::action::InitializeNavigation
  */
-class InitializeNavigation : public BtActionNode<task_msgs::action::InitializeNavigation>
+class InitializeNavigation : public nav2_behavior_tree::BtActionNode<task_msgs::action::InitializeNavigation>
 {
 public:
   /**

@@ -7,7 +7,6 @@ int main(int argc, char * argv[])
   // Need to wait some time for the publisher to stablish connection, bug ?
   std::chrono::seconds sleep_time_sec(1);
   rclcpp::sleep_for(std::chrono::duration_cast<std::chrono::nanoseconds>(sleep_time_sec));
-  task_monitor_node->Start();
   rclcpp::spin_some(task_monitor_node->get_node_base_interface());
   RCLCPP_INFO(task_monitor_node->get_logger(), "Spin");
   rclcpp::shutdown();

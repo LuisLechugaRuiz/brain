@@ -2,6 +2,11 @@
 
 #include "nav2_util/simple_action_server.hpp"
 #include "pose_3d.hpp"
+#include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/transform_listener.h"
+#include "tf2/convert.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #define LOG(level, ...) RCLCPP_##level(this->get_logger(), __VA_ARGS__)
 
@@ -26,11 +31,11 @@ TaskMonitor::TaskMonitor() : Node("task_monitor") {
   // Subscriber to get the robot pose from amcl node
   robot_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "amcl_pose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(),
-    std::bind(&TaskMonitor::AmclPoseCallback(), this, std::placeholders::_1));
+    std::bind(&TaskMonitor::AmclPoseCallback, this, std::placeholders::_1));
 
   // Action server to initialize navigation properly
   initialize_navigation_action_server_ = std::make_unique<InitializeNavigationActionServer>(
-    rclcpp_node_, "initialize_navigation", std::bind(&TaskMonitor::SetInitialPose, this));
+    this->create_sub_node("action_sub_node"), "initialize_navigation", std::bind(&TaskMonitor::SetInitialPose, this));
 
   initial_pose_ = GetInitialPose();
 }
@@ -56,25 +61,29 @@ geometry_msgs::msg::PoseWithCovarianceStamped TaskMonitor::GetInitialPose() {
   return initial_pose_with_covariance_msg;
 }
 
-void TaskMonitor::AmclPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
-  robot_pose_ = msg->pose;
+void TaskMonitor::AmclPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
+  if (msg) {
+    robot_pose_ = *msg;
+  }
 }
 
 bool TaskMonitor::IsRobotAtPose(geometry_msgs::msg::PoseWithCovarianceStamped desired_pose) {
   // Get the relative tf from the actual robot pose to the desired pose
-  tf2::Transform robot_pose_tf = tf2::fromMsg(robot_pose_);
-  tf2::Transform desired_pose_tf = tf2::fromMsg(desired_pose);
+  tf2::Stamped<tf2::Transform> robot_pose_tf, desired_pose_tf;
+  tf2::fromMsg(robot_pose_, robot_pose_tf);
+  tf2::fromMsg(desired_pose, desired_pose_tf);
   tf2::Transform relative_tf = robot_pose_tf.inverseTimes(desired_pose_tf);
 
   // Check that location coordinates are lower than the distance tolerance
   auto relative_translation = relative_tf.getOrigin();
-  for (auto& coordinate : relative_translation) {
+  std::vector<double> relative_translation_vector{relative_translation.getX(), relative_translation.getY(), relative_translation.getZ()};
+  for (auto &coordinate : relative_translation_vector) {
     if (coordinate > pose_distance_tolerance_)
       return false;
   }
 
   // Check that the RPY angles are lower than the angle tolerance
-  tf2::Matrix3x3 relative_orientation_matrix(relative_tf.getOrientation());
+  tf2::Matrix3x3 relative_orientation_matrix(relative_tf.getRotation());
   std::vector<double> relative_orientation_vector;
   relative_orientation_vector.reserve(3);
   relative_orientation_matrix.getRPY(relative_orientation_vector[0], relative_orientation_vector[1], relative_orientation_vector[2]);
@@ -88,13 +97,13 @@ bool TaskMonitor::IsRobotAtPose(geometry_msgs::msg::PoseWithCovarianceStamped de
 
 void TaskMonitor::SetInitialPose() {
   LOG(INFO, "Initialize navigation service called");
-  auto start_time = rclcpp::Time::now();
+  auto start_time = this->now();
   initial_pose_ = initialize_navigation_action_server_->get_current_goal()->pose;
   timeout_s_ = initialize_navigation_action_server_->get_current_goal()->timeout_s;
   initial_pose_pub_->publish(initial_pose_);
   
   // Check that the robot is at the desired pose
-  while ((rclcpp::Time::now() - start_time).seconds() < timeout_s_) {
+  while ((this->now() - start_time).seconds() < timeout_s_) {
     if (IsRobotAtPose(initial_pose_)) {
       LOG(INFO, "Robot is at initial pose");
       initialize_navigation_action_server_->succeeded_current();

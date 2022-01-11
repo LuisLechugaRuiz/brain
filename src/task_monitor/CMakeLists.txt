@@ -5,11 +5,16 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+find_package(ament_cmake REQUIRED)
 find_package(types REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(nav2_util REQUIRED)
+find_package(task_behavior_tree REQUIRED)
+find_package(task_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 include_directories(
   include
@@ -33,8 +38,12 @@ set(dependencies
   types
   geometry_msgs
   rclcpp
+  nav2_util
+  task_behavior_tree
+  task_msgs
   tf2
   tf2_geometry_msgs
+  tf2_ros
 )
 
 ament_target_dependencies(${library_name}

@@ -1,7 +1,7 @@
 #include <memory>
 #include <string>
 
-#include "actions/initialize_navigation.hpp"
+#include "action/initialize_navigation.hpp"
 
 namespace behavior_tree {
 namespace action {
@@ -40,10 +40,10 @@ BT_REGISTER_NODES(factory)
   BT::NodeBuilder builder =
     [](const std::string & name, const BT::NodeConfiguration & config)
     {
-      return std::make_unique<behavior_tree::InitializeNavigation>(
+      return std::make_unique<behavior_tree::action::InitializeNavigation>(
         name, "initialize_navigation", config);
     };
 
-  factory.registerBuilder<behavior_tree::InitializeNavigation>(
+  factory.registerBuilder<behavior_tree::action::InitializeNavigation>(
     "InitializeNavigation", builder);
 }
