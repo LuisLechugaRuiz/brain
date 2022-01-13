@@ -7,17 +7,13 @@
 #include "behaviortree_cpp_v3/xml_parsing.h"
 #include "behaviortree_cpp_v3/loggers/bt_zmq_publisher.h"
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 namespace bt_navigate_and_find {
-
-using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
-
 /**
  * @class bt_navigate_and_find::BtNavigateAndFind
  * @brief A bt class which navigates and tries to find and specific object
  */
-class BtNavigateAndFind : public rclcpp_lifecycle::LifecycleNode {
+class BtNavigateAndFind : public rclcpp::Node {
 public:
   /**
    * @brief Constructor
@@ -30,38 +26,14 @@ public:
 
 protected:
   /**
-   * @brief Configures member variables
-   *
-   * Builds behavior tree from xml file.
-   * @param state Reference to LifeCycle node state
-   * @return SUCCESS or FAILURE
+   * @brief Configures the behavior tree
+   * @return bool with the status
    */
-  CallbackReturn on_configure(const rclcpp_lifecycle::State &state) override;
+  bool ConfigureBT();
   /**
-   * @brief Activates action server
-   * @param state Reference to LifeCycle node state
-   * @return SUCCESS or FAILURE
+   * @brief Run the behavior tree
    */
-  CallbackReturn on_activate(const rclcpp_lifecycle::State &state) override;
-  /**
-   * @brief Deactivates action server
-   * @param state Reference to LifeCycle node state
-   * @return SUCCESS or FAILURE
-   */
-  CallbackReturn on_deactivate(const rclcpp_lifecycle::State &state) override;
-  /**
-   * @brief Resets member variables
-   * @param state Reference to LifeCycle node state
-   * @return SUCCESS or FAILURE
-   */
-  CallbackReturn on_cleanup(const rclcpp_lifecycle::State &state) override;
-  /**
-   * @brief Called when in shutdown state
-   * @param state Reference to LifeCycle node state
-   * @return SUCCESS or FAILURE
-   */
-  CallbackReturn on_shutdown(const rclcpp_lifecycle::State &state) override;
-
+  void RunBT();
   /**
    * @brief Load the desired behavior tree
    * @param bt_xml_filename The file containing the new BT
@@ -75,6 +47,8 @@ protected:
   BT::BehaviorTreeFactory factory_;
   // The tree of the BT
   BT::Tree tree_;
+  // A regular, non-spinning ROS node that we can use for calls to the action client
+  rclcpp::Node::SharedPtr client_node_;
   // The XML file that cointains the Behavior Tree to create
   std::string default_bt_xml_filename_;
   // Libraries to pull plugins (BT Nodes) from

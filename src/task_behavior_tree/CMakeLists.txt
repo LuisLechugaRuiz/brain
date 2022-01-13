@@ -9,6 +9,7 @@ endif()
 find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(task_msgs REQUIRED)
 
@@ -32,6 +33,7 @@ set(dependencies
   behaviortree_cpp_v3
   geometry_msgs
   rclcpp
+  rclcpp_action
   rclcpp_lifecycle
   task_msgs
 )
@@ -46,7 +48,7 @@ ament_target_dependencies(${library_name}
   ${dependencies}
 )
 
-add_library(task_initialize_navigation_action_bt_node SHARED plugins/src/action/initialize_navigation.cpp)
+add_library(task_initialize_navigation_action_bt_node SHARED plugins/action/initialize_navigation.cpp)
 list(APPEND plugin_libs task_initialize_navigation_action_bt_node)
 
 foreach(bt_plugin ${plugin_libs})
@@ -54,15 +56,22 @@ foreach(bt_plugin ${plugin_libs})
   target_compile_definitions(${bt_plugin} PRIVATE BT_PLUGIN_EXPORT)
 endforeach()
 
-install(TARGETS ${plugin_libs}
+install(TARGETS ${library_name}
+                ${plugin_libs}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
+install(TARGETS ${executable_name}
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
 install(DIRECTORY include/
   DESTINATION include/
 )
+
+install(DIRECTORY behavior_trees DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -77,6 +86,7 @@ ament_export_include_directories(
 )
 
 ament_export_libraries(
+  ${library_name}
   ${plugin_libs}
 )
 

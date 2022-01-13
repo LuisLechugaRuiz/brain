@@ -40,8 +40,7 @@ public:
   {
     return providedBasicPorts(
       {
-        BT::InputPort<geometry_msgs::msg::PoseStamped>("pose", "Initial pose"),
-        BT::InputPort<double>("timeout_s", "Timeout in seconds"),
+        BT::InputPort<double>("timeout_s", 10.0, "Timeout in seconds"),
       });
   }
 };

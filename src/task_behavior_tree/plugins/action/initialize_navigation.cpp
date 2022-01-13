@@ -17,12 +17,6 @@ InitializeNavigation::InitializeNavigation(
 void InitializeNavigation::on_tick()
 {
   // TODO: Make a template to check that we get the goal_ parameters correctly
-  if (!getInput("pose", goal_.pose)) {
-    RCLCPP_ERROR(
-      node_->get_logger(),
-      "InitializeNavigation: initial pose not provided");
-    return;
-  }
   if (!getInput("timeout_s", goal_.timeout_s)) {
     RCLCPP_ERROR(
       node_->get_logger(),

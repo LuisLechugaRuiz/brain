@@ -1,5 +1,4 @@
 #goal definition
-geometry_msgs/PoseWithCovarianceStamped pose
 float32 timeout_s
 ---
 #result definition

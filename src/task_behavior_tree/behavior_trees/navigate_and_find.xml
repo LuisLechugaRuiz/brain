@@ -1,0 +1,10 @@
+<!--
+  This Behavior Tree initialize navigation at the moment, but will navigate and find an object
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+       <Sequence name="root_sequence">
+          <InitializeNavigation timeout_s="{timeout_s}"/>
+      </Sequence>
+  </BehaviorTree>
+</root>
