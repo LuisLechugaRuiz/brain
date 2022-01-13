@@ -8,55 +8,56 @@
 #include "tf2/convert.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-#define LOG(level, ...) RCLCPP_##level(this->get_logger(), __VA_ARGS__)
+// #define LOG(level, ...) RCLCPP_##level(this->get_logger(), __VA_ARGS__)
 
 namespace brain {
 
-TaskMonitor::TaskMonitor() : Node("task_monitor") {
-  LOG(INFO, "constructor");
+TaskMonitor::TaskMonitor() {
+  rclcpp_node_ = std::make_shared<rclcpp::Node>("task_monitor");
+  RCLCPP_INFO(rclcpp_node_->get_logger(), "Constructor");
 
-  this->declare_parameter<double>("initial_x", 0.0);
-  this->declare_parameter<double>("initial_y", 0.0);
-  this->declare_parameter<double>("initial_z", 0.0);
-  this->declare_parameter<double>("pose_distance_tolerance", 0.0);
-  this->declare_parameter<double>("pose_angle_tolerance", 0.0);
+  rclcpp_node_->declare_parameter<double>("initial_x", 0.0);
+  rclcpp_node_->declare_parameter<double>("initial_y", 0.0);
+  rclcpp_node_->declare_parameter<double>("initial_z", 0.0);
+  rclcpp_node_->declare_parameter<double>("pose_distance_tolerance", 0.0);
+  rclcpp_node_->declare_parameter<double>("pose_angle_tolerance", 0.0);
 
-  this->get_parameter_or("pose_distance_tolerance", pose_distance_tolerance_, 0.25);
-  this->get_parameter_or("pose_angle_tolerance", pose_angle_tolerance_, 0.09); // 5 degrees by default
+  rclcpp_node_->get_parameter_or("pose_distance_tolerance", pose_distance_tolerance_, 0.25);
+  rclcpp_node_->get_parameter_or("pose_angle_tolerance", pose_angle_tolerance_, 0.09); // 5 degrees by default
 
   // Publisher to send to amcl node the initial pose
-  initial_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "initialpose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+  initial_pose_pub_ = rclcpp_node_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "initialpose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
   // Subscriber to get the robot pose from amcl node
-  robot_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "amcl_pose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(),
-    std::bind(&TaskMonitor::AmclPoseCallback, this, std::placeholders::_1));
+  robot_pose_sub_ = rclcpp_node_->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "amcl_pose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(),
+      std::bind(&TaskMonitor::AmclPoseCallback, this, std::placeholders::_1));
 
   // Action server to initialize navigation properly
   initialize_navigation_action_server_ = std::make_unique<InitializeNavigationActionServer>(
-    this->create_sub_node("action_sub_node"), "initialize_navigation", std::bind(&TaskMonitor::SetInitialPose, this));
+      rclcpp_node_, "initialize_navigation", std::bind(&TaskMonitor::SetInitialPose, this));
 
   initial_pose_ = GetInitialPose();
 }
 
 TaskMonitor::~TaskMonitor() {
-  LOG(WARN, "Destructor");
+  RCLCPP_WARN(rclcpp_node_->get_logger(), "Destructor");
 }
 
 // TODO: Fill the initial pose in the BT blackboard at the start
 geometry_msgs::msg::PoseWithCovarianceStamped TaskMonitor::GetInitialPose() {
   // Get parameters
   double initial_x, initial_y, initial_yaw;
-  this->get_parameter_or("initial_x", initial_x, 0.0);
-  this->get_parameter_or("initial_y", initial_y, 0.0);
-  this->get_parameter_or("initial_yaw", initial_yaw, 0.0);
+  rclcpp_node_->get_parameter_or("initial_x", initial_x, 0.0);
+  rclcpp_node_->get_parameter_or("initial_y", initial_y, 0.0);
+  rclcpp_node_->get_parameter_or("initial_yaw", initial_yaw, 0.0);
   geometry_msgs::msg::PoseWithCovarianceStamped initial_pose_with_covariance_msg;
   utils::types::Pose3D initial_pose(initial_x, initial_y, initial_yaw);
   initial_pose_with_covariance_msg.pose = initial_pose.ToMsgWithCovariance();
   initial_pose_with_covariance_msg.header.frame_id = "map";
   initial_pose_with_covariance_msg.header.stamp = rclcpp::Time();
-  LOG(INFO, "Initial pose: x: %f" ", y: %f" ", z: %f" ", yaw: %f",
+  RCLCPP_INFO(rclcpp_node_->get_logger(), "Initial pose: x: %f" ", y: %f" ", z: %f" ", yaw: %f",
              initial_pose.x(), initial_pose.y(), 0.0, initial_pose.yaw());
   return initial_pose_with_covariance_msg;
 }
@@ -96,22 +97,22 @@ bool TaskMonitor::IsRobotAtPose(geometry_msgs::msg::PoseWithCovarianceStamped de
 }
 
 void TaskMonitor::SetInitialPose() {
-  LOG(INFO, "Initialize navigation service called");
-  auto start_time = this->now();
+  RCLCPP_INFO(rclcpp_node_->get_logger(), "Initialize navigation service called");
+  auto start_time = rclcpp_node_->now();
   initial_pose_ = initialize_navigation_action_server_->get_current_goal()->pose;
   timeout_s_ = initialize_navigation_action_server_->get_current_goal()->timeout_s;
   initial_pose_pub_->publish(initial_pose_);
   
   // Check that the robot is at the desired pose
-  while ((this->now() - start_time).seconds() < timeout_s_) {
+  while ((rclcpp_node_->now() - start_time).seconds() < timeout_s_) {
     if (IsRobotAtPose(initial_pose_)) {
-      LOG(INFO, "Robot is at initial pose");
+      RCLCPP_INFO(rclcpp_node_->get_logger(), "Robot is at initial pose");
       initialize_navigation_action_server_->succeeded_current();
       return;
     }
-    LOG(INFO, "Robot still not at initial pose");
+    RCLCPP_INFO(rclcpp_node_->get_logger(), "Robot still not at initial pose");
   }
-  LOG(ERROR, "Failed to set initial pose");
+  RCLCPP_ERROR(rclcpp_node_->get_logger(), "Failed to set initial pose");
   initialize_navigation_action_server_->terminate_current();
 }
 

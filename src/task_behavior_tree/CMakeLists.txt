@@ -5,20 +5,45 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+
+find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(nav2_behavior_tree REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(task_msgs REQUIRED)
 
 include_directories(
   include
 )
 
-set(library_name ${PROJECT_NAME})
+set(executable_name bt_navigate_and_find)
+
+add_executable(${executable_name}
+  src/main.cpp
+)
+
+set(library_name ${executable_name}_core)
+
+add_library(${library_name} SHARED
+  src/bt_navigate_and_find.cpp
+)
 
 set(dependencies
+  behaviortree_cpp_v3
   geometry_msgs
-  nav2_behavior_tree
+  rclcpp
+  rclcpp_lifecycle
   task_msgs
+)
+
+ament_target_dependencies(${executable_name}
+  ${dependencies}
+)
+
+target_link_libraries(${executable_name} ${library_name})
+
+ament_target_dependencies(${library_name}
+  ${dependencies}
 )
 
 add_library(task_initialize_navigation_action_bt_node SHARED plugins/src/action/initialize_navigation.cpp)

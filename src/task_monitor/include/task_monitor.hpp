@@ -3,11 +3,10 @@
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "nav2_util/simple_action_server.hpp"
 #include "task_msgs/action/initialize_navigation.hpp"
-#include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 namespace brain {
 
-class TaskMonitor : public rclcpp::Node {
+class TaskMonitor {
   public:
     /**
      * @brief Default constructor
@@ -17,6 +16,9 @@ class TaskMonitor : public rclcpp::Node {
      * @brief Default destructor
      */
     ~TaskMonitor();
+
+    // The local node
+    rclcpp::Node::SharedPtr rclcpp_node_; // TODO: Make it private and access a method from main
   
   private:
     /**
