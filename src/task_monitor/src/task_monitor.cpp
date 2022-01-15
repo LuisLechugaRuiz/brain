@@ -121,6 +121,8 @@ void TaskMonitor::SetInitialPose() {
   while ((now() - start_time).seconds() < timeout_s_) {
     if (IsRobotAtPose(initial_pose_)) {
       LOG(INFO, "Robot is at initial pose");
+      // Wait until nav is properly initialized. TODO: Make it better subscribing to any topic
+      rclcpp::sleep_for(std::chrono::milliseconds(5000));
       initialize_navigation_action_server_->succeeded_current();
       return;
     }

@@ -39,7 +39,7 @@ BtNavigateAndFind::BtNavigateAndFind() : rclcpp::Node("bt_navigate_and_find") {
   for (auto& goal_pose_name : goal_poses_names_) {
     declare_parameter(goal_pose_name);
   }
-  declare_parameter("spin_angle", 0.7854);
+  declare_parameter("spin_angle", 0.785);
   declare_parameter("wait_time", 3.0);
 
   if (ConfigureBT()) {
@@ -87,7 +87,7 @@ bool BtNavigateAndFind::ConfigureBT() {
   double spin_angle;
   get_parameter("spin_angle", spin_angle);
   blackboard_->set<double>("spin_angle", spin_angle);
-  blackboard_->set<int>("spin_cycles", int(3.14 / spin_angle));
+  blackboard_->set<int>("spin_cycles", int(std::round(6.28 / spin_angle)));
   blackboard_->set<double>("wait_time", (get_parameter("wait_time")).get_value<double>());
 
   // Get the BT filename to use from the node parameter
