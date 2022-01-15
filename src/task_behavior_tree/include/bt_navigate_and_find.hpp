@@ -53,6 +53,7 @@ protected:
   std::string default_bt_xml_filename_;
   // Libraries to pull plugins (BT Nodes) from
   std::vector<std::string> plugin_lib_names_;
+  std::vector<std::string> goal_poses_names_;
 
 };
 

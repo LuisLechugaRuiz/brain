@@ -54,9 +54,6 @@ class TaskMonitor : public rclcpp::Node {
     using InitializeNavigationAction = task_msgs::action::InitializeNavigation;
     using InitializeNavigationActionServer = nav2_util::SimpleActionServer<InitializeNavigationAction>;
     std::unique_ptr<InitializeNavigationActionServer> initialize_navigation_action_server_;
-
-    std::shared_ptr<rclcpp::Client<lifecycle_msgs::srv::GetState>> client_get_bt_state_;
-    std::shared_ptr<rclcpp::Client<lifecycle_msgs::srv::ChangeState>> client_change_bt_state_;
 };
 
 } // namespace brain

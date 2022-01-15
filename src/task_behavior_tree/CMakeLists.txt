@@ -12,6 +12,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(task_msgs REQUIRED)
+find_package(types REQUIRED)
 
 include_directories(
   include
@@ -36,6 +37,7 @@ set(dependencies
   rclcpp_action
   rclcpp_lifecycle
   task_msgs
+  types
 )
 
 ament_target_dependencies(${executable_name}
@@ -50,6 +52,12 @@ ament_target_dependencies(${library_name}
 
 add_library(task_initialize_navigation_action_bt_node SHARED plugins/action/initialize_navigation.cpp)
 list(APPEND plugin_libs task_initialize_navigation_action_bt_node)
+
+add_library(task_element_found_condition_bt_node SHARED plugins/condition/element_found.cpp)
+list(APPEND plugin_libs task_element_found_condition_bt_node)
+
+add_library(task_get_next_pose_condition_bt_node SHARED plugins/condition/get_next_pose.cpp)
+list(APPEND plugin_libs task_get_next_pose_condition_bt_node)
 
 foreach(bt_plugin ${plugin_libs})
   ament_target_dependencies(${bt_plugin} ${dependencies})

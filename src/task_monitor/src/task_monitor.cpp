@@ -17,36 +17,21 @@
 namespace brain {
 
 namespace {
-  static constexpr char const * kBTNode = "bt_navigate_and_find";
-  static constexpr char const * kBTGetStateTopic = "bt_navigate_and_find/get_state";
-  static constexpr char const * kBTChangeStateTopic = "bt_navigate_and_find/change_state";
-
-  template<typename FutureT, typename WaitTimeT>
-  std::future_status wait_for_result(FutureT & future, WaitTimeT time_to_wait) {
-    auto end = std::chrono::steady_clock::now() + time_to_wait;
-    std::chrono::milliseconds wait_period(100);
-    std::future_status status = std::future_status::timeout;
-    do {
-      auto now = std::chrono::steady_clock::now();
-      auto time_left = end - now;
-      if (time_left <= std::chrono::seconds(0)) {break;}
-      status = future.wait_for((time_left < wait_period) ? time_left : wait_period);
-    } while (rclcpp::ok() && status != std::future_status::ready);
-    return status;
-  }
+  constexpr double kDefaultDistanceTolerance = 0.25;
+  constexpr double kDefaultAngleTolerance = 0.09; // 5 degrees by default
 }
 
 TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   LOG(INFO, "Constructor");
 
-  declare_parameter<double>("initial_x", 0.0);
-  declare_parameter<double>("initial_y", 0.0);
-  declare_parameter<double>("initial_z", 0.0);
-  declare_parameter<double>("pose_distance_tolerance", 0.25);
-  declare_parameter<double>("pose_angle_tolerance", 0.09); // 5 degrees by default
+  declare_parameter("initial_x");
+  declare_parameter("initial_y");
+  declare_parameter("initial_z");
+  declare_parameter("pose_distance_tolerance");
+  declare_parameter("pose_angle_tolerance");
 
-  get_parameter("pose_distance_tolerance", pose_distance_tolerance_);
-  get_parameter("pose_angle_tolerance", pose_angle_tolerance_); 
+  get_parameter_or("pose_distance_tolerance", pose_distance_tolerance_, kDefaultDistanceTolerance);
+  get_parameter_or("pose_angle_tolerance", pose_angle_tolerance_, kDefaultAngleTolerance);
 
   // Publisher to send to amcl node the initial pose
   initial_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -56,10 +41,6 @@ TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   robot_pose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "amcl_pose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(),
       std::bind(&TaskMonitor::AmclPoseCallback, this, std::placeholders::_1));
-
-  // Clients to change/get the bt state
-  client_get_bt_state_ = create_client<lifecycle_msgs::srv::GetState>(kBTGetStateTopic);
-  client_change_bt_state_ = create_client<lifecycle_msgs::srv::ChangeState>(kBTChangeStateTopic);
 
   // Action server to initialize navigation properly
   initialize_navigation_action_server_ = std::make_unique<InitializeNavigationActionServer>(
@@ -75,7 +56,6 @@ TaskMonitor::~TaskMonitor() {
   LOG(WARN, "Destructor");
 }
 
-// TODO: Fill the initial pose in the BT blackboard at the start
 geometry_msgs::msg::PoseWithCovarianceStamped TaskMonitor::GetInitialPose() {
   // Get parameters
   double initial_x, initial_y, initial_yaw;

@@ -3,8 +3,23 @@
 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-       <Sequence name="root_sequence">
+      <Sequence name="root_sequence">
           <InitializeNavigation timeout_s="{timeout_s}"/>
+          <!-- Set this value at task_monitor! -->
+          <RecoveryNode number_of_retries="100" name="FindElementRecovery">
+              <ElementFound/>
+              <Sequence name="navigate_and_spin_sequence">
+                  <GetNextPose goal_poses="{goal_poses}" new_position_goal="{goal_position}" new_orientation_goal="{goal_orientation}"/>
+                  <NavigateToPose position="{goal_position}" orientation="{goal_orientation}"/>
+                  <Repeat num_cycles="{spin_cycles}">
+                      <Sequence name="spin_and_wait">
+                          <Spin spin_dist="{spin_angle}"/>
+                          <Wait wait_duration="{wait_time}"/>
+                      </Sequence>
+                  </Repeat>
+              </Sequence> 
+            <!-- Insert next sequence once the element is found -->
+          </RecoveryNode>
       </Sequence>
   </BehaviorTree>
 </root>
