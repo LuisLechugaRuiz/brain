@@ -1,0 +1,34 @@
+<!--
+  This Behavior Tree manage navigation in order to find an object
+-->
+<root main_tree_to_execute="MainTree">
+
+  <BehaviorTree ID="ExploreTree">
+      <Sequence name="explore_navigation_sequence">
+          <!-- Get best frontier -->
+          <NavigateToPose position="{frontier_position}" orientation="{frontier_orientation}"/>
+      </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="MainTree">
+      <Sequence name="root_sequence">
+          <InitializeNavigation timeout_s="{timeout_s}"/>
+          <!-- Set this value at task_monitor! -->
+          <RecoveryNode number_of_retries="100" name="FindElementRecovery">
+              <Inverter>
+                <ElementFound name="{object}" position="{object_position}" orientation="{object_orientation}"/>
+              </Inverter>
+              <SubTree ID="ExploreTree"/>
+          </RecoveryNode>
+          <!-- Pick up element, navigate right now -->
+          <NavigateToPose position="{object_position}" orientation="{object_orientation}"/>
+          <RecoveryNode number_of_retries="100" name="FindExitRecovery">
+              <ElementFound name="{exit}" position="{exit_position}" orientation="{exit_orientation}"/>
+              <SubTree ID="ExploreTree"/>
+          </RecoveryNode>
+          <NavigateToPose position="{exit_position}" orientation="{exit_orientation}"/>
+          <AllElementFound/>
+      </Sequence>
+  </BehaviorTree>
+
+</root>
