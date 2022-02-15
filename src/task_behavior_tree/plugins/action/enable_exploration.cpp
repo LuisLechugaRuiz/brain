@@ -12,16 +12,19 @@ EnableExploration::EnableExploration(
   const BT::NodeConfiguration & conf)
 : BtActionNode<task_msgs::action::EnableExploration>(xml_tag_name, action_name, conf)
 {
+  RCLCPP_ERROR(node_->get_logger(),"Construct enable exploration");
 }
 
 void EnableExploration::on_tick()
 {
+  RCLCPP_ERROR(node_->get_logger(),"On tick");
   if (!getInput("enable", goal_.enable)) {
     RCLCPP_ERROR(
       node_->get_logger(),
       "EnableExploration: timeout_s not provided");
     return;
   }
+  RCLCPP_ERROR(node_->get_logger(),"Leaving On Tick");
 }
 
 }  // namespace action

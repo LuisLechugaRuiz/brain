@@ -9,22 +9,31 @@ namespace {
   constexpr const char *kElementFoundTopic = "/perception_node/element_found";
 }
 
+// We can create a factory for each object
 ElementFoundCondition::ElementFoundCondition(
   const std::string & condition_name,
   const BT::NodeConfiguration & conf)
-: BT::ConditionNode(condition_name, conf), element_found_state_{false} {
+: BT::ConditionNode(condition_name, conf) {
   auto node = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
+  RCLCPP_ERROR(node->get_logger(),"Element found constructor");
+  getInput("name", name_);
 
-  element_found_sub = node->create_subscription<std_msgs::msg::Bool>(
+  element_pose_sub_ = node->create_subscription<geometry_msgs::msg::Pose>(
     kElementFoundTopic, 1, std::bind(&ElementFoundCondition::CallbackElementFound, this, std::placeholders::_1));
 }
 
 BT::NodeStatus ElementFoundCondition::tick() {
-  return element_found_state_ ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+  if (element_pose_) {
+    setOutput("new_position_goal", element_pose_->position);
+    setOutput("new_orientation_goal", element_pose_->orientation);
+    element_pose_.reset();
+    return BT::NodeStatus::SUCCESS;
+  }
+  return BT::NodeStatus::FAILURE;
 }
 
-void ElementFoundCondition::CallbackElementFound(std_msgs::msg::Bool::UniquePtr msg) {
-  element_found_state_ = msg->data;
+void ElementFoundCondition::CallbackElementFound(geometry_msgs::msg::Pose::SharedPtr msg) {
+  element_pose_ = *msg;
 }
 
 }  // namespace condition

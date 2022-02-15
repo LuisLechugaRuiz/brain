@@ -14,7 +14,7 @@ NewFrontierFoundCondition::NewFrontierFoundCondition(
   const BT::NodeConfiguration & conf)
 : BT::ConditionNode(condition_name, conf) {
   auto node = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
-
+  RCLCPP_ERROR(node->get_logger(),"New frontier found constructor");
   new_frontier_sub_ = node->create_subscription<geometry_msgs::msg::Pose>(
     kNewFrontierTopic, 1, std::bind(&NewFrontierFoundCondition::CallbackNewFrontier, this, std::placeholders::_1));
 }

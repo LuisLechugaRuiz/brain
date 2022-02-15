@@ -10,3 +10,6 @@
 [submodule "src/m-explore-ros2"]
 	path = src/m-explore-ros2
 	url = https://github.com/LuisLechugaRuiz/m-explore-ros2
+[submodule "src/slam_toolbox"]
+	path = src/slam_toolbox
+	url = https://github.com/LuisLechugaRuiz/slam_toolbox

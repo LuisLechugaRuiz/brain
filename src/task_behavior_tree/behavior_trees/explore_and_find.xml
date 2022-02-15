@@ -5,29 +5,36 @@
 
   <BehaviorTree ID="ExploreTree">
       <Sequence name="explore_navigation_sequence">
-          <!-- Get best frontier -->
+          <NewFrontierFound new_position_goal="{frontier_position}" new_orientation_goal="{frontier_orientation}"/>
           <NavigateToPose position="{frontier_position}" orientation="{frontier_orientation}"/>
       </Sequence>
   </BehaviorTree>
 
   <BehaviorTree ID="MainTree">
       <Sequence name="root_sequence">
-          <InitializeNavigation timeout_s="{timeout_s}"/>
+          <!-- InitializeNavigation timeout_s="{timeout_s}" /-->
           <!-- Set this value at task_monitor! -->
+          <EnableExploration enable="true"/>
+          <!-- Maybe we can change this by a DoWhile as we don't want to have a specific number of retries -->
           <RecoveryNode number_of_retries="100" name="FindElementRecovery">
-              <Inverter>
-                <ElementFound name="{object}" position="{object_position}" orientation="{object_orientation}"/>
-              </Inverter>
-              <SubTree ID="ExploreTree"/>
+              <ElementFound name="object" position="{object_position}" orientation="{object_orientation}"/>
+              <!--SubTree ID="ExploreTree"/-->
+              <Sequence name="explore_navigation_sequence">
+                    <NewFrontierFound new_position_goal="{frontier_position}" new_orientation_goal="{frontier_orientation}"/>
+                    <NavigateToPose position="{frontier_position}" orientation="{frontier_orientation}"/>
+              </Sequence>
           </RecoveryNode>
           <!-- Pick up element, navigate right now -->
           <NavigateToPose position="{object_position}" orientation="{object_orientation}"/>
           <RecoveryNode number_of_retries="100" name="FindExitRecovery">
-              <ElementFound name="{exit}" position="{exit_position}" orientation="{exit_orientation}"/>
-              <SubTree ID="ExploreTree"/>
+              <ElementFound name="exit" position="{exit_position}" orientation="{exit_orientation}"/>
+              <Sequence name="explore_navigation_sequence">
+                    <NewFrontierFound new_position_goal="{frontier_position}" new_orientation_goal="{frontier_orientation}"/>
+                    <NavigateToPose position="{frontier_position}" orientation="{frontier_orientation}"/>
+              </Sequence>
           </RecoveryNode>
           <NavigateToPose position="{exit_position}" orientation="{exit_orientation}"/>
-          <AllElementFound/>
+          <!--AllElementFound/ -->
       </Sequence>
   </BehaviorTree>
 
