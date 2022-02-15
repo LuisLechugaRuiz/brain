@@ -7,3 +7,9 @@
 [submodule "src/turtlebot3_simulations"]
 	path = src/turtlebot3_simulations
 	url = git@github.com:LuisLechugaRuiz/turtlebot3_simulations.git
+[submodule "src/m-explore-ros2"]
+	path = src/m-explore-ros2
+	url = https://github.com/LuisLechugaRuiz/m-explore-ros2
+[submodule "src/slam_toolbox"]
+	path = src/slam_toolbox
+	url = https://github.com/LuisLechugaRuiz/slam_toolbox

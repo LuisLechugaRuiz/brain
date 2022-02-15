@@ -1,0 +1,6 @@
+#goal definition
+bool enable
+---
+#result definition
+std_msgs/Empty result
+---

@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(task_behavior_tree)
 
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -53,11 +58,17 @@ ament_target_dependencies(${library_name}
 add_library(task_initialize_navigation_action_bt_node SHARED plugins/action/initialize_navigation.cpp)
 list(APPEND plugin_libs task_initialize_navigation_action_bt_node)
 
+add_library(task_enable_exploration_action_bt_node SHARED plugins/action/enable_exploration.cpp)
+list(APPEND plugin_libs task_enable_exploration_action_bt_node)
+
 add_library(task_element_found_condition_bt_node SHARED plugins/condition/element_found.cpp)
 list(APPEND plugin_libs task_element_found_condition_bt_node)
 
 add_library(task_get_next_pose_condition_bt_node SHARED plugins/condition/get_next_pose.cpp)
 list(APPEND plugin_libs task_get_next_pose_condition_bt_node)
+
+add_library(task_new_frontier_found_condition_bt_node SHARED plugins/condition/new_frontier_found.cpp)
+list(APPEND plugin_libs task_new_frontier_found_condition_bt_node)
 
 foreach(bt_plugin ${plugin_libs})
   ament_target_dependencies(${bt_plugin} ${dependencies})
