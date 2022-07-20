@@ -36,6 +36,10 @@ TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   initial_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "initialpose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
+  // Publisher to enable/disable exploration
+  enable_exploration_pub_ = create_publisher<std_msgs::msg::Bool>(
+      "explore/resume", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+
   // Subscriber to get the robot pose from amcl node
   robot_pose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "amcl_pose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable(),
@@ -45,6 +49,14 @@ TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   initialize_navigation_action_server_ = std::make_unique<InitializeNavigationActionServer>(
       get_node_base_interface(), get_node_clock_interface(), get_node_logging_interface(),
       get_node_waitables_interface(), "initialize_navigation", std::bind(&TaskMonitor::SetInitialPose, this));
+  initialize_navigation_action_server_->activate();
+
+
+  // Action server to enable/disable exploration
+  enable_exploration_action_server_ = std::make_unique<EnableExplorationActionServer>(
+      get_node_base_interface(), get_node_clock_interface(), get_node_logging_interface(),
+      get_node_waitables_interface(), "enable_exploration", std::bind(&TaskMonitor::EnableExploration, this));
+  enable_exploration_action_server_->activate();
 
   initial_pose_ = GetInitialPose();
 
@@ -129,6 +141,16 @@ void TaskMonitor::SetInitialPose() {
   }
   LOG(ERROR, "Failed to set initial pose");
   initialize_navigation_action_server_->terminate_current();
+}
+
+void TaskMonitor::EnableExploration() {
+  LOG(INFO, "Enable/Disabled exploration service called");
+  bool enable = enable_exploration_action_server_->get_current_goal()->enable;
+  LOG(INFO, (std::string(enable ? "Enable" : "Disable") + (" exploration service called")).c_str());
+  std_msgs::msg::Bool enable_msg;
+  enable_msg.data = enable;
+  enable_exploration_pub_->publish(enable_msg);
+  enable_exploration_action_server_->succeeded_current();
 }
 
 } // namespace brain

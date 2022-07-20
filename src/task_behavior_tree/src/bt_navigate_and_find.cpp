@@ -15,21 +15,26 @@
 
 #define LOG(level, ...) RCLCPP_##level(this->get_logger(), __VA_ARGS__)
 
+namespace {
+  const std::string kDefaultBTFilename = "default_bt_xml_filename";
+}
+
 namespace bt_navigate_and_find {
 
 BtNavigateAndFind::BtNavigateAndFind() : rclcpp::Node("bt_navigate_and_find") {
   LOG(INFO, "Constructor");
 
   const std::vector<std::string> plugin_libs = {
+    "task_initialize_navigation_action_bt_node",
     "task_enable_exploration_action_bt_node",
     "nav2_recovery_node_bt_node",
     "task_element_found_condition_bt_node",
     "task_new_frontier_found_condition_bt_node",
-    "nav2_navigate_to_pose_action_bt_node",
+    "nav2_navigate_to_pose_action_bt_node"
   };
 
   // Declare this node's parameters
-  declare_parameter("default_bt_xml_filename");
+  SetDefaultBTFile();
   declare_parameter("plugin_lib_names", plugin_libs);
 
   if (ConfigureBT()) {
@@ -63,10 +68,11 @@ bool BtNavigateAndFind::ConfigureBT() {
   blackboard_->set<double>("timeout_s", 10.0);
   blackboard_->set<rclcpp::Node::SharedPtr>("node", client_node_);
   blackboard_->set<std::chrono::milliseconds>("server_timeout", std::chrono::milliseconds(1000));
+  blackboard_->set<std::chrono::milliseconds>("bt_loop_duration", std::chrono::milliseconds(10));
   LOG(INFO, "Set");
 
   // Get the BT filename to use from the node parameter
-  get_parameter("default_bt_xml_filename", default_bt_xml_filename_);
+  get_parameter(kDefaultBTFilename, default_bt_xml_filename_);
 
   // Load the behavior tree
   if (!loadBehaviorTree(default_bt_xml_filename_)) {
@@ -105,6 +111,16 @@ bool BtNavigateAndFind::loadBehaviorTree(const std::string & bt_xml_filename) {
   LOG(INFO, "Created");
 
   return true;
+}
+
+void BtNavigateAndFind::SetDefaultBTFile() {
+  if (!has_parameter(kDefaultBTFilename)) {
+    std::string pkg_share_dir =
+      ament_index_cpp::get_package_share_directory("task_behavior_tree");
+    std::string tree_file = pkg_share_dir +
+      "/behavior_trees/explore_test.xml";
+    declare_parameter(kDefaultBTFilename, tree_file);
+  }
 }
 
 } // namespace bt_navigate_and_find

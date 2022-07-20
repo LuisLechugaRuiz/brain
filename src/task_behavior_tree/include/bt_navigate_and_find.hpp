@@ -7,6 +7,7 @@
 #include "behaviortree_cpp_v3/xml_parsing.h"
 #include "behaviortree_cpp_v3/loggers/bt_zmq_publisher.h"
 #include "rclcpp/rclcpp.hpp"
+#include "ament_index_cpp/get_package_share_directory.hpp"
 
 namespace bt_navigate_and_find {
 /**
@@ -40,6 +41,10 @@ protected:
    * @return true if the resulting BT correspond to the one in bt_xml_filename, false otherwise.
    */
   bool loadBehaviorTree(const std::string & bt_id);
+  /**
+   * @brief Set the default bt filename as a parameter
+   */
+  void SetDefaultBTFile();
 
   // The blackboard shared by all of the nodes in the tree
   BT::Blackboard::Ptr blackboard_;

@@ -15,7 +15,7 @@ GetNextPoseCondition::GetNextPoseCondition(
 }
 
 BT::NodeStatus GetNextPoseCondition::tick() {
-  RCLCPP_INFO(bt_node_->get_logger(), "Number of poses is: %d", goal_poses_.size());
+  RCLCPP_INFO(bt_node_->get_logger(), "Number of poses is: %ld", goal_poses_.size());
   if (goal_poses_it_ != goal_poses_.end()) {
     setOutput("new_position_goal", goal_poses_it_->position);
     setOutput("new_orientation_goal", goal_poses_it_->orientation);

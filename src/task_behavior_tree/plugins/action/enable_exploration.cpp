@@ -21,7 +21,7 @@ void EnableExploration::on_tick()
   if (!getInput("enable", goal_.enable)) {
     RCLCPP_ERROR(
       node_->get_logger(),
-      "EnableExploration: timeout_s not provided");
+      "EnableExploration: enable flag not provided");
     return;
   }
   RCLCPP_ERROR(node_->get_logger(),"Leaving On Tick");

@@ -6,7 +6,7 @@ namespace behavior_tree {
 namespace condition {
 
 namespace {
-  constexpr const char *kNewFrontierTopic = "new_frontier";
+  constexpr const char *kNewFrontierTopic = "explore/goal_frontier";
 }
 
 NewFrontierFoundCondition::NewFrontierFoundCondition(
@@ -15,22 +15,26 @@ NewFrontierFoundCondition::NewFrontierFoundCondition(
 : BT::ConditionNode(condition_name, conf) {
   auto node = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
   RCLCPP_ERROR(node->get_logger(),"New frontier found constructor");
-  new_frontier_sub_ = node->create_subscription<geometry_msgs::msg::Pose>(
-    kNewFrontierTopic, 1, std::bind(&NewFrontierFoundCondition::CallbackNewFrontier, this, std::placeholders::_1));
+  new_frontier_sub_ = node->create_subscription<geometry_msgs::msg::Point>(
+    kNewFrontierTopic, rclcpp::SystemDefaultsQoS(), std::bind(&NewFrontierFoundCondition::CallbackNewFrontier, this, std::placeholders::_1));
 }
 
 BT::NodeStatus NewFrontierFoundCondition::tick() {
   if (!new_frontier_) {
     return BT::NodeStatus::FAILURE;
   }
+  geometry_msgs::msg::PoseStamped goal_pose;
+  goal_pose.header.frame_id = "map";
+  goal_pose.header.stamp = config().blackboard->get<rclcpp::Node::SharedPtr>("node")->now();
+  goal_pose.pose.position = new_frontier_.value();
+  goal_pose.pose.orientation.w = 1.0;
+  setOutput("new_goal", goal_pose);
 
-  setOutput("new_position_goal", new_frontier_->position);
-  setOutput("new_orientation_goal", new_frontier_->orientation);
   new_frontier_.reset();
   return BT::NodeStatus::SUCCESS;
 }
 
-void NewFrontierFoundCondition::CallbackNewFrontier(geometry_msgs::msg::Pose::SharedPtr msg) {
+void NewFrontierFoundCondition::CallbackNewFrontier(geometry_msgs::msg::Point::SharedPtr msg) {
   new_frontier_ = *msg;
 }
 
