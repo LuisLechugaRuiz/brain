@@ -55,6 +55,7 @@ class TaskMonitor : public rclcpp::Node {
 
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr enable_exploration_pub_;
+    rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr exploration_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr robot_pose_sub_;
 
     // Action server that implements the InitializeNavigation action

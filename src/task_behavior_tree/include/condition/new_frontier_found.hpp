@@ -31,6 +31,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr new_frontier_sub_;
 
   std::optional<geometry_msgs::msg::Point> new_frontier_;
+  std::optional<geometry_msgs::msg::Point> last_frontier_;
 };
 
 }  // namespace behavior_tree

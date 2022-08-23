@@ -1,6 +1,7 @@
 #include "task_monitor.hpp"
 
 #include <future>
+#include <unistd.h>
 
 #include "pose_3d.hpp"
 #include "tf2/LinearMath/Matrix3x3.h"
@@ -23,11 +24,11 @@ namespace {
 TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   LOG(INFO, "Constructor");
 
-  declare_parameter("initial_x");
-  declare_parameter("initial_y");
-  declare_parameter("initial_z");
-  declare_parameter("pose_distance_tolerance");
-  declare_parameter("pose_angle_tolerance");
+  declare_parameter<double>("initial_x");
+  declare_parameter<double>("initial_y");
+  declare_parameter<double>("initial_z");
+  declare_parameter<double>("pose_distance_tolerance");
+  declare_parameter<double>("pose_angle_tolerance");
 
   get_parameter_or("pose_distance_tolerance", pose_distance_tolerance_, kDefaultDistanceTolerance);
   get_parameter_or("pose_angle_tolerance", pose_angle_tolerance_, kDefaultAngleTolerance);
@@ -150,7 +151,26 @@ void TaskMonitor::EnableExploration() {
   std_msgs::msg::Bool enable_msg;
   enable_msg.data = enable;
   enable_exploration_pub_->publish(enable_msg);
-  enable_exploration_action_server_->succeeded_current();
+  if (enable) {
+    bool first_frontier_received = false;
+    exploration_sub_ = create_subscription<geometry_msgs::msg::Point>(
+        "explore/goal_frontier", 1,
+        [&]([[maybe_unused]] geometry_msgs::msg::Point::SharedPtr msg) {
+          first_frontier_received = true;
+        });
+    while (!first_frontier_received) {
+      rclcpp::spin_some(get_node_base_interface());
+      // Wait for a second
+      usleep(1000000);
+    }
+    if (first_frontier_received) {
+      enable_exploration_action_server_->succeeded_current();
+    } else {
+      enable_exploration_action_server_->terminate_current();
+    }
+  } else {
+    enable_exploration_action_server_->succeeded_current();
+  }
 }
 
 } // namespace brain

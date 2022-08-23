@@ -11,6 +11,7 @@
                 <NewFrontierFound new_goal="{frontier_pose}"/>
                 <NavigateToPose goal="{frontier_pose}"/>
                 <EnableExploration enable="false"/>
+                <!-- Instead of this we should just go home or do something if we are stuck -->
           </WhileDoElse>
       </Sequence>
   </BehaviorTree>
