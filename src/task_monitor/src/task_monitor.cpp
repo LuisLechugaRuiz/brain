@@ -1,8 +1,8 @@
 #include "task_monitor.hpp"
 
 #include <future>
+#include <unistd.h>
 
-#include "nav2_util/simple_action_server.hpp"
 #include "pose_3d.hpp"
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -24,11 +24,11 @@ namespace {
 TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   LOG(INFO, "Constructor");
 
-  declare_parameter("initial_x");
-  declare_parameter("initial_y");
-  declare_parameter("initial_z");
-  declare_parameter("pose_distance_tolerance");
-  declare_parameter("pose_angle_tolerance");
+  declare_parameter<double>("initial_x");
+  declare_parameter<double>("initial_y");
+  declare_parameter<double>("initial_z");
+  declare_parameter<double>("pose_distance_tolerance");
+  declare_parameter<double>("pose_angle_tolerance");
 
   get_parameter_or("pose_distance_tolerance", pose_distance_tolerance_, kDefaultDistanceTolerance);
   get_parameter_or("pose_angle_tolerance", pose_angle_tolerance_, kDefaultAngleTolerance);
@@ -36,6 +36,10 @@ TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   // Publisher to send to amcl node the initial pose
   initial_pose_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "initialpose", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+
+  // Publisher to enable/disable exploration
+  enable_exploration_pub_ = create_publisher<std_msgs::msg::Bool>(
+      "explore/resume", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
 
   // Subscriber to get the robot pose from amcl node
   robot_pose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -46,6 +50,14 @@ TaskMonitor::TaskMonitor() : rclcpp::Node("task_monitor") {
   initialize_navigation_action_server_ = std::make_unique<InitializeNavigationActionServer>(
       get_node_base_interface(), get_node_clock_interface(), get_node_logging_interface(),
       get_node_waitables_interface(), "initialize_navigation", std::bind(&TaskMonitor::SetInitialPose, this));
+  initialize_navigation_action_server_->activate();
+
+
+  // Action server to enable/disable exploration
+  enable_exploration_action_server_ = std::make_unique<EnableExplorationActionServer>(
+      get_node_base_interface(), get_node_clock_interface(), get_node_logging_interface(),
+      get_node_waitables_interface(), "enable_exploration", std::bind(&TaskMonitor::EnableExploration, this));
+  enable_exploration_action_server_->activate();
 
   initial_pose_ = GetInitialPose();
 
@@ -130,6 +142,35 @@ void TaskMonitor::SetInitialPose() {
   }
   LOG(ERROR, "Failed to set initial pose");
   initialize_navigation_action_server_->terminate_current();
+}
+
+void TaskMonitor::EnableExploration() {
+  LOG(INFO, "Enable/Disabled exploration service called");
+  bool enable = enable_exploration_action_server_->get_current_goal()->enable;
+  LOG(INFO, (std::string(enable ? "Enable" : "Disable") + (" exploration service called")).c_str());
+  std_msgs::msg::Bool enable_msg;
+  enable_msg.data = enable;
+  enable_exploration_pub_->publish(enable_msg);
+  if (enable) {
+    bool first_frontier_received = false;
+    exploration_sub_ = create_subscription<geometry_msgs::msg::Point>(
+        "explore/goal_frontier", 1,
+        [&]([[maybe_unused]] geometry_msgs::msg::Point::SharedPtr msg) {
+          first_frontier_received = true;
+        });
+    while (!first_frontier_received) {
+      rclcpp::spin_some(get_node_base_interface());
+      // Wait for a second
+      usleep(1000000);
+    }
+    if (first_frontier_received) {
+      enable_exploration_action_server_->succeeded_current();
+    } else {
+      enable_exploration_action_server_->terminate_current();
+    }
+  } else {
+    enable_exploration_action_server_->succeeded_current();
+  }
 }
 
 } // namespace brain

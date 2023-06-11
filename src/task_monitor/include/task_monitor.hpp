@@ -5,6 +5,8 @@
 #include "lifecycle_msgs/srv/get_state.hpp"
 #include "nav2_util/simple_action_server.hpp"
 #include "task_msgs/action/initialize_navigation.hpp"
+#include "task_msgs/action/enable_exploration.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 namespace brain {
 using namespace std::chrono_literals;
@@ -40,6 +42,10 @@ class TaskMonitor : public rclcpp::Node {
      * @return bool with the comparation result
      */
     bool IsRobotAtPose(geometry_msgs::msg::PoseWithCovarianceStamped desired_pose);
+    /**
+     * @brief Enable exploration
+     */
+    void EnableExploration();
 
     double pose_distance_tolerance_;
     double pose_angle_tolerance_;
@@ -48,12 +54,19 @@ class TaskMonitor : public rclcpp::Node {
     geometry_msgs::msg::PoseWithCovarianceStamped robot_pose_;
 
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr enable_exploration_pub_;
+    rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr exploration_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr robot_pose_sub_;
 
     // Action server that implements the InitializeNavigation action
     using InitializeNavigationAction = task_msgs::action::InitializeNavigation;
     using InitializeNavigationActionServer = nav2_util::SimpleActionServer<InitializeNavigationAction>;
     std::unique_ptr<InitializeNavigationActionServer> initialize_navigation_action_server_;
+
+    // Action server that implements the EnableExploration action
+    using EnableExplorationAction = task_msgs::action::EnableExploration;
+    using EnableExplorationActionServer = nav2_util::SimpleActionServer<EnableExplorationAction>;
+    std::unique_ptr<EnableExplorationActionServer> enable_exploration_action_server_;
 };
 
 } // namespace brain
